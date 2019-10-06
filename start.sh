@@ -1,0 +1,1 @@
+nohup java -jar -Xms1024m -Xmx1024m -XX:+PrintFlagsFinal -XX:+PrintCommandLineFlags -XX:+PrintGCDetails -Xloggc:gc.log -XX:+PrintGCTimeStamps -verbose:gc -XX:+PrintGCApplicationStoppedTime fast-im-core-0.0.1-SNAPSHOT.jar > system.out 2>&1 &
