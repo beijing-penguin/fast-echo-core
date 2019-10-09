@@ -109,7 +109,7 @@ public class StressClient {
     }
 
     public static NettyConnection connectServer() throws Throwable {
-        NettyConnection conn = new NettyConnection("192.168.81.131", 8000).connect().setListener(new MessageListener() {
+        NettyConnection conn = new NettyConnection("localhost", 8000).connect().setListener(new MessageListener() {
             @Override
             public void callback(ChannelHandlerContext ctx, Message message) {
                 Header header = JSON.parseObject(message.getHeader(), Header.class);
