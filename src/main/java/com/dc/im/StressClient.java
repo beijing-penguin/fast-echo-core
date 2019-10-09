@@ -62,6 +62,7 @@ public class StressClient {
             String context = sc.nextLine();
             if(context!=null && context.length()>0) {
                 try {
+                	long sendTime = System.currentTimeMillis();
                     for (int i = 0; i < Integer.parseInt(context); i++) {
                         Message message = new Message();
                         Map<String, Object> headerMap = new HashMap<String, Object>();
@@ -70,7 +71,7 @@ public class StressClient {
                         headerMap.put("receiver", new String[] {receiver});
                         headerMap.put("sender", username);
                         headerMap.put("encoding", encoding);
-                        headerMap.put("sendTime", System.currentTimeMillis());
+                        headerMap.put("sendTime", sendTime);
                         message.setHeader(JSON.toJSONString(headerMap));
                     
                         message.setBody(String.valueOf(i+"压力测试压力测试压力测试压力测试压力测试压力测试压力测试压力测试").getBytes());
