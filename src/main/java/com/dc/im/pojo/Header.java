@@ -2,14 +2,14 @@ package com.dc.im.pojo;
 
 public class Header {
 	
+	private String msgId;
     private Integer statusCode;
-    private String details;
+    private String info;
     private Integer msgType;
     private String sender;
     private String[] receiver;
     private String encoding;
     private Long sendTime;
-    private String msgId;
     
     /**
 	 * 服务端接收时间
@@ -17,12 +17,14 @@ public class Header {
 	private Long serverRevTime;
 	
 	
-	public String getDetails() {
-		return details;
+
+	
+	public String getInfo() {
+		return info;
 	}
 
-	public void setDetails(String details) {
-		this.details = details;
+	public void setInfo(String info) {
+		this.info = info;
 	}
 
 	public Integer getStatusCode() {

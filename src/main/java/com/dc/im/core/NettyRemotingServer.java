@@ -87,24 +87,10 @@ public class NettyRemotingServer {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
                         Header header = JSON.parseObject(msg.getHeader(),Header.class);
+                        msg.setHeaderObj(header);
                         switch (header.getMsgType()) {
                         case MsgType.USER_LOGIN:
-                            //1.认证登录参数
-                            //2.登录成功
-                            synchronized (user_channel_map) {
-                                if(user_channel_map.containsKey(header.getSender())) {
-                                	header.setStatusCode(200);
-                                    header.setMsgType(MessageEnum.USER_EXIST.getMsgType());
-                                    msg.setHeader(JSON.toJSONString(header));
-                                    ctx.channel().writeAndFlush(msg);
-                                    ctx.close();
-                                }else {
-                                    user_channel_map.put(header.getSender(), ctx);
-                                    msg.setHeader(JSON.toJSONString(header));
-                                    msg.setBody(new String("登录成功").getBytes());
-                                    ctx.channel().writeAndFlush(msg);
-                                }
-                            }
+                            
                             break;
                         case MsgType.MESSAGE_IM:
                             String[]  receiverArr = header.getReceiver();
