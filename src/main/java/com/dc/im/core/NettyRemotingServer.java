@@ -3,7 +3,6 @@ package com.dc.im.core;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -87,9 +86,6 @@ public class NettyRemotingServer {
                 pipeline.addLast("handler", new SimpleChannelInboundHandler<Message>() {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-                        msg.setServerRevTime(System.currentTimeMillis());
-                        msg.setMsgId(UUID.randomUUID().toString().replace("-", ""));
-                        
                         Header header = JSON.parseObject(msg.getHeader(),Header.class);
                         switch (header.getMsgType()) {
                         case MsgType.USER_LOGIN:
@@ -97,6 +93,7 @@ public class NettyRemotingServer {
                             //2.登录成功
                             synchronized (user_channel_map) {
                                 if(user_channel_map.containsKey(header.getSender())) {
+                                	header.setStatusCode(200);
                                     header.setMsgType(MessageEnum.USER_EXIST.getMsgType());
                                     msg.setHeader(JSON.toJSONString(header));
                                     ctx.channel().writeAndFlush(msg);
