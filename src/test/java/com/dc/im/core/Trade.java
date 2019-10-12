@@ -9,10 +9,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +22,7 @@ import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dc.im.config.LoggerName;
+import com.dc.echo.config.LoggerName;
 /**
  * mqbroker.cmd -n 127.0.0.1:9876 autoCreateTopicEnable=true
  * mqnamesrv.cmd

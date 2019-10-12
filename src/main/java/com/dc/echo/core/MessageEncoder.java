@@ -1,10 +1,10 @@
-package com.dc.im.core;
+package com.dc.echo.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dc.im.config.LoggerName;
-import com.dc.im.pojo.Message;
+import com.dc.echo.config.LoggerName;
+import com.dc.echo.pojo.Message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

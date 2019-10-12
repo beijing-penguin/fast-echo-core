@@ -1,4 +1,4 @@
-package com.dc.im.pojo;
+package com.dc.echo.pojo;
 
 public class Header {
 	
@@ -17,8 +17,21 @@ public class Header {
 	private Long serverRevTime;
 	
 	
-
+	/**
+     * 应用秘钥
+     */
+    private String appKey;
+    
+    
 	
+	public String getAppKey() {
+		return appKey;
+	}
+
+	public void setAppKey(String appKey) {
+		this.appKey = appKey;
+	}
+
 	public String getInfo() {
 		return info;
 	}

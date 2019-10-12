@@ -1,4 +1,4 @@
-package com.dc.im.utils;
+package com.dc.echo.utils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

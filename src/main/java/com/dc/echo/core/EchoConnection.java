@@ -1,4 +1,4 @@
-package com.dc.im.core;
+package com.dc.echo.core;
 
 
 import java.util.concurrent.CountDownLatch;
@@ -7,9 +7,10 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dc.im.config.LoggerName;
-import com.dc.im.config.NettyConfig;
-import com.dc.im.pojo.Message;
+import com.dc.echo.config.LoggerName;
+import com.dc.echo.config.NettyConfig;
+import com.dc.echo.pojo.Message;
+import com.dc.echo.utils.EchoCoreUtils;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -67,7 +68,7 @@ public class EchoConnection{
                     while(keepaliveThread!=null) {
                         try {
                             Thread.sleep(keepaliveTimeout*1000);
-                            sendMessage(ImCoreUtils.getKeepaliveMess());
+                            sendMessage(EchoCoreUtils.getKeepaliveMess());
                         } catch (Throwable e) {
                             LOG.error("",e);
                             return;

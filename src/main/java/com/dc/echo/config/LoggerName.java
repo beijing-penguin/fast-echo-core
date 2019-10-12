@@ -1,4 +1,4 @@
-package com.dc.im.config;
+package com.dc.echo.config;
 
 public class LoggerName {
     public static final String CONSOLE = "console";

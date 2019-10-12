@@ -3,7 +3,7 @@ package com.dc.im.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dc.im.config.LoggerName;
+import com.dc.echo.config.LoggerName;
 
 /**
  * Unit test for simple App.

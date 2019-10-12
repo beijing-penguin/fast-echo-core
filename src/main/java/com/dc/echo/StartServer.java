@@ -1,11 +1,11 @@
-package com.dc.im;
+package com.dc.echo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dc.im.config.LoggerName;
-import com.dc.im.config.ServerConfig;
-import com.dc.im.core.EchoRemotingServer;
+import com.dc.echo.config.LoggerName;
+import com.dc.echo.config.ServerConfig;
+import com.dc.echo.core.EchoRemotingServer;
 
 public class StartServer {
 	private static Logger LOG = LoggerFactory.getLogger(LoggerName.CONSOLE);

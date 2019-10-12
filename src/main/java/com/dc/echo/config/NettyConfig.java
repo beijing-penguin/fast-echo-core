@@ -1,4 +1,4 @@
-package com.dc.im.config;
+package com.dc.echo.config;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;

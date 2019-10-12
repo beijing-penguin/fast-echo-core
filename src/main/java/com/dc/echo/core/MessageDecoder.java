@@ -1,8 +1,8 @@
-package com.dc.im.core;
+package com.dc.echo.core;
 
 import java.util.List;
 
-import com.dc.im.pojo.Message;
+import com.dc.echo.pojo.Message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

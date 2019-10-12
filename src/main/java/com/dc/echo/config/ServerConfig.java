@@ -1,4 +1,4 @@
-package com.dc.im.config;
+package com.dc.echo.config;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.Properties;
 
-import com.dc.im.utils.SystemUtils;
+import com.dc.echo.utils.SystemUtils;
 
 
 public class ServerConfig {

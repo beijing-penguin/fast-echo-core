@@ -1,4 +1,4 @@
-package com.dc.im.pojo;
+package com.dc.echo.pojo;
 
 import com.alibaba.fastjson.annotation.JSONField;
 

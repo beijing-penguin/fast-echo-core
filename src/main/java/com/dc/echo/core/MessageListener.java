@@ -1,6 +1,6 @@
-package com.dc.im.core;
+package com.dc.echo.core;
 
-import com.dc.im.pojo.Message;
+import com.dc.echo.pojo.Message;
 
 import io.netty.channel.ChannelHandlerContext;
 

@@ -1,12 +1,13 @@
-package com.dc.im.core;
+package com.dc.echo.core;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.alibaba.fastjson.JSON;
-import com.dc.im.config.TransCode;
-import com.dc.im.pojo.Header;
-import com.dc.im.pojo.Message;
+import com.dc.echo.config.EchoCode;
+import com.dc.echo.pojo.Header;
+import com.dc.echo.pojo.Message;
+
 import io.netty.channel.ChannelHandlerContext;
 
 public class LoginController {
@@ -18,13 +19,13 @@ public class LoginController {
         //2.登录成功
         synchronized (user_channel_map) {
             if(user_channel_map.containsKey(header.getSender())) {//注册id已存在
-                header.setStatusCode(TransCode.USER_EXIST);
+                header.setStatusCode(EchoCode.USER_EXIST);
                 msg.setHeader(JSON.toJSONString(header));
                 ctx.channel().writeAndFlush(msg);
                 ctx.close();
             }else {
                 user_channel_map.put(header.getSender(), ctx);
-                header.setStatusCode(TransCode.SUCCESS);
+                header.setStatusCode(EchoCode.SUCCESS);
                 msg.setHeader(JSON.toJSONString(header));
                 ctx.channel().writeAndFlush(msg);
             }

@@ -1,4 +1,4 @@
-package com.dc.im;
+package com.dc.echo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,12 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.dc.im.config.LoggerName;
-import com.dc.im.config.TransCode;
-import com.dc.im.core.EchoConnection;
-import com.dc.im.core.MessageListener;
-import com.dc.im.pojo.Header;
-import com.dc.im.pojo.Message;
+import com.dc.echo.config.LoggerName;
+import com.dc.echo.config.EchoCode;
+import com.dc.echo.core.EchoConnection;
+import com.dc.echo.core.MessageListener;
+import com.dc.echo.pojo.Header;
+import com.dc.echo.pojo.Message;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -43,7 +43,7 @@ public class Client {
             try {
                 conn.setSync(true);
                 Message message = login(conn, username);
-                if(JSON.parseObject(message.getHeader(), Header.class).getMsgType()==TransCode.LOGIN_ACTION) {
+                if(JSON.parseObject(message.getHeader(), Header.class).getMsgType()==EchoCode.LOGIN_ACTION) {
                     conn.setSync(false);
                     break;
                 }
@@ -64,7 +64,7 @@ public class Client {
                         Message message = new Message();
                         Map<String, Object> headerMap = new HashMap<String, Object>();
                         headerMap.put("version", "1.0");
-                        headerMap.put("msgType", TransCode.MESSAGE_TRANS_ACTION);//发送消息
+                        headerMap.put("msgType", EchoCode.MESSAGE_TRANS_ACTION);//发送消息
                         headerMap.put("receiver", new String[] {receiver});
                         headerMap.put("sender", username);
                         headerMap.put("encoding", encoding);
@@ -100,7 +100,7 @@ public class Client {
         Message message = new Message();
         Map<String, Object> headerMap = new HashMap<String, Object>();
         headerMap.put("version", "1.0");
-        headerMap.put("msgType", TransCode.LOGIN_ACTION);// 登录
+        headerMap.put("msgType", EchoCode.LOGIN_ACTION);// 登录
         headerMap.put("sender", username);
         message.setHeader(JSON.toJSONString(headerMap));
         return conn.sendMessage(message);// 开始登录
@@ -113,13 +113,13 @@ public class Client {
                 Header header = JSON.parseObject(message.getHeader(), Header.class);
                 if (header.getSender() != null) {
                     try {
-                        if (header.getMsgType() == TransCode.MESSAGE_TRANS_ACTION) {
+                        if (header.getMsgType() == EchoCode.MESSAGE_TRANS_ACTION) {
                             LOG_RECEIVE.info(new String(message.getBody()));
                             System.out.println();
                             System.out.println("         " + header.getSender() + ":" +new String(message.getBody()));
                             System.out.print(header.getReceiver()[0] + ":");
                         }
-                        if (header.getMsgType() == TransCode.USER_EXIST) {// 用户已被注册，请重启程序，并使用新的用户名登录
+                        if (header.getMsgType() == EchoCode.USER_EXIST) {// 用户已被注册，请重启程序，并使用新的用户名登录
                             System.out.print("用户已被注册，请重启程序，并使用新的用户名登录");
                         }
                     } catch (Exception e) {
