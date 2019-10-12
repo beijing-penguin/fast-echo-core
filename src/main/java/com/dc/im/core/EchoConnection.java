@@ -23,7 +23,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-public class NettyConnection{
+public class EchoConnection{
     private static Logger LOG = LoggerFactory.getLogger(LoggerName.CONSOLE);
 
     public static CountDownLatch  resultWait;
@@ -45,17 +45,17 @@ public class NettyConnection{
     
     public Thread keepaliveThread;
     
-    public NettyConnection(NettyConfig config){
+    public EchoConnection(NettyConfig config){
         bootstrap = config.getBootstrap();
         group = config.getBoss();
         host = config.getHost();
         port = config.getPort();
     }
-    public NettyConnection(String host,int port){
+    public EchoConnection(String host,int port){
         this.host = host;
         this.port = port;
     }
-    public NettyConnection connect() throws Throwable{
+    public EchoConnection connect() throws Throwable{
         try {
             if(group==null) {
                 group = new NioEventLoopGroup(1);
@@ -99,7 +99,7 @@ public class NettyConnection{
                                     protected void channelRead0(ChannelHandlerContext ctx, Message message) throws Exception {
                                         //System.err.println("客户端收到"+message.getHeaders());
                                         if(sync) {
-                                            NettyConnection.message = message;
+                                            EchoConnection.message = message;
                                             resultWait.countDown();
                                         }else {
                                             if(listener!=null) {
@@ -154,8 +154,8 @@ public class NettyConnection{
     }
     public Message sendMessage(Message message,MessageListener listener) throws Throwable{
         if(sync) {
-            NettyConnection.message=null;
-            NettyConnection.resultWait = new CountDownLatch(1);
+            EchoConnection.message=null;
+            EchoConnection.resultWait = new CountDownLatch(1);
         }
         if(listener!=null ) {
             this.listener = listener;
@@ -165,12 +165,12 @@ public class NettyConnection{
         }
         channel.writeAndFlush(message);
         if(sync) {
-            NettyConnection.resultWait.await(readTimeOut,TimeUnit.SECONDS);
-            if(NettyConnection.resultWait.getCount()!=0) {
-                NettyConnection.message = null;
+            EchoConnection.resultWait.await(readTimeOut,TimeUnit.SECONDS);
+            if(EchoConnection.resultWait.getCount()!=0) {
+                EchoConnection.message = null;
                 throw new Exception("send fail");
             }
-            return NettyConnection.message;
+            return EchoConnection.message;
         }else {
             return null;
         }
@@ -223,19 +223,19 @@ public class NettyConnection{
         return message;
     }
     public static void setMessage(Message message) {
-        NettyConnection.message = message;
+        EchoConnection.message = message;
     }
     public boolean isSync() {
         return sync;
     }
-    public NettyConnection setSync(boolean sync) {
+    public EchoConnection setSync(boolean sync) {
         this.sync = sync;
         return this;
     }
     public MessageListener getListener() {
         return listener;
     }
-    public NettyConnection setListener(MessageListener listener) {
+    public EchoConnection setListener(MessageListener listener) {
         this.listener = listener;
         return this;
     }

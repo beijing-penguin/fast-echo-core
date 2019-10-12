@@ -5,14 +5,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.alibaba.fastjson.JSON;
 import com.dc.im.config.LoggerName;
+import com.dc.im.config.TransCode;
 import com.dc.im.pojo.Header;
 import com.dc.im.pojo.Message;
-import com.dc.im.pojo.MessageEnum;
-import com.dc.im.pojo.MsgType;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,9 +28,7 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;       
 
-public class NettyRemotingServer {
-
-    private static Map<String,ChannelHandlerContext> user_channel_map = new ConcurrentHashMap<String, ChannelHandlerContext>();
+public class EchoRemotingServer {
 
     private static Logger LOG = LoggerFactory.getLogger(LoggerName.CONSOLE);
     private static Logger LOG_RECEIVE = LoggerFactory.getLogger(LoggerName.RECEIVE);
@@ -37,7 +36,7 @@ public class NettyRemotingServer {
     private  NioEventLoopGroup boss;
     private  NioEventLoopGroup work;
     private int port;
-    public NettyRemotingServer(int port) {
+    public EchoRemotingServer(int port) {
         this.port = port;
     }
     public void start() throws Throwable {
@@ -86,27 +85,34 @@ public class NettyRemotingServer {
                 pipeline.addLast("handler", new SimpleChannelInboundHandler<Message>() {
                     @Override
                     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-                        Header header = JSON.parseObject(msg.getHeader(),Header.class);
-                        msg.setHeaderObj(header);
-                        switch (header.getMsgType()) {
-                        case MsgType.USER_LOGIN:
-                            
-                            break;
-                        case MsgType.MESSAGE_IM:
-                            String[]  receiverArr = header.getReceiver();
-                            for (int i = 0; i < receiverArr.length; i++) {
-                                ChannelHandlerContext receiver_channel = user_channel_map.get(receiverArr[i]);
-                                if(receiver_channel!=null && receiver_channel.channel().isOpen() && receiver_channel.channel().isActive()) {
-                                    receiver_channel.channel().writeAndFlush(msg);
-                                }
-                            }
-                            break;
-                        case MsgType.HEARTBEAT:
-                            ctx.channel().writeAndFlush(ImCoreUtils.getSuccMess(MessageEnum.HEARTBEAT.getMsgType()));
-                        default:
-                            break;
-                        }
-                        LOG_RECEIVE.info(JSON.toJSONString(msg));
+                        try {
+                        	LOG_RECEIVE.info(JSON.toJSONString(msg));
+                        	
+	                    	Header header = JSON.parseObject(msg.getHeader(),Header.class);
+	                        msg.setHeaderObj(header);
+	                        switch (header.getMsgType()) {
+	                        case TransCode.LOGIN_ACTION:
+	                        	LoginController.login(ctx, msg);
+	                            break;
+	                        case TransCode.MESSAGE_TRANS_ACTION:
+	                            String[]  receiverArr = header.getReceiver();
+	                            for (int i = 0; i < receiverArr.length; i++) {
+	                                ChannelHandlerContext receiver_channel = LoginController.user_channel_map.get(receiverArr[i]);
+	                                if(receiver_channel!=null && receiver_channel.channel().isOpen() && receiver_channel.channel().isActive()) {
+	                                    receiver_channel.channel().writeAndFlush(msg);
+	                                }
+	                            }
+	                            break;
+	                        case TransCode.HEARTBEAT_ACTION:
+	                            ctx.channel().writeAndFlush(ImCoreUtils.getMessByCode(TransCode.SUCCESS));
+	                        default:
+	                            break;
+	                        }
+	                        return;
+                        }catch (Exception e) {
+                        	LOG.error("server error",e);
+                        	ctx.channel().writeAndFlush(ImCoreUtils.getErrorMess());
+						}
                     }
 
                     @Override
@@ -117,9 +123,10 @@ public class NettyRemotingServer {
                     @Override
                     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
                         System.err.println("server channelUnregistered");
-                        for (Entry<String, ChannelHandlerContext> entry : user_channel_map.entrySet()) {
+                        for (Entry<String, ChannelHandlerContext> entry : LoginController.user_channel_map.entrySet()) {
                             if(entry.getValue()==ctx) {
-                                user_channel_map.remove(entry.getKey());
+                            	LOG.info("["+entry.getKey()+"]-用户已退出");
+                            	LoginController.user_channel_map.remove(entry.getKey());
                             }
                         }
                         ctx.close();
@@ -159,7 +166,6 @@ public class NettyRemotingServer {
             }
         });
         this.serverBootstrap.bind().sync();
-        LOG.info("success,bind port is "+port);
     }
     public void shutdown() throws Throwable{
         try {
@@ -180,4 +186,30 @@ public class NettyRemotingServer {
             serverBootstrap = null;
         }
     }
+	public ServerBootstrap getServerBootstrap() {
+		return serverBootstrap;
+	}
+	public void setServerBootstrap(ServerBootstrap serverBootstrap) {
+		this.serverBootstrap = serverBootstrap;
+	}
+	public NioEventLoopGroup getBoss() {
+		return boss;
+	}
+	public void setBoss(NioEventLoopGroup boss) {
+		this.boss = boss;
+	}
+	public NioEventLoopGroup getWork() {
+		return work;
+	}
+	public void setWork(NioEventLoopGroup work) {
+		this.work = work;
+	}
+	public int getPort() {
+		return port;
+	}
+	public void setPort(int port) {
+		this.port = port;
+	}
+    
+    
 }

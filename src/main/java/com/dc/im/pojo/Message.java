@@ -1,8 +1,13 @@
 package com.dc.im.pojo;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 public class Message {
     public static final int MAGIC_CODE = 0x1314;
+    
+    @JSONField(serialize=false)
     private Header headerObj;
+    
     private String header;
 	private byte[] body;
 	

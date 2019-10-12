@@ -1,14 +1,21 @@
 package com.dc.im;
 
-import com.dc.im.core.NettyRemotingServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.dc.im.config.LoggerName;
+import com.dc.im.config.ServerConfig;
+import com.dc.im.core.EchoRemotingServer;
 
 public class StartServer {
-    public static void main(String[] args) {
-        NettyRemotingServer server = new NettyRemotingServer(8000);
-        try {
-            server.start();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
+	private static Logger LOG = LoggerFactory.getLogger(LoggerName.CONSOLE);
+	public static void main(String[] args) {
+		EchoRemotingServer server = new EchoRemotingServer(ServerConfig.getInstance().port);
+		try {
+			server.start();
+			LOG.info("success,bind port is "+server.getPort());
+		} catch (Throwable e) {
+			LOG.error("",e);
+		}
+	}
 }

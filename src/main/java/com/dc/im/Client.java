@@ -9,11 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.dc.im.config.LoggerName;
+import com.dc.im.config.TransCode;
+import com.dc.im.core.EchoConnection;
 import com.dc.im.core.MessageListener;
-import com.dc.im.core.NettyConnection;
 import com.dc.im.pojo.Header;
 import com.dc.im.pojo.Message;
-import com.dc.im.pojo.MsgType;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -27,7 +27,7 @@ public class Client {
     private static Logger LOG = LoggerFactory.getLogger(LoggerName.CONSOLE);
     private static Logger LOG_RECEIVE = LoggerFactory.getLogger(LoggerName.RECEIVE);
     //private static Logger LOG_SEND = LoggerFactory.getLogger(LoggerName.SEND);
-    public static NettyConnection conn;
+    public static EchoConnection conn;
     public static long start;
     public static void main(String[] args) throws Throwable {
         System.err.println(Math.max(1, SystemPropertyUtil.getInt(
@@ -43,7 +43,7 @@ public class Client {
             try {
                 conn.setSync(true);
                 Message message = login(conn, username);
-                if(JSON.parseObject(message.getHeader(), Header.class).getMsgType()==MsgType.USER_LOGIN) {
+                if(JSON.parseObject(message.getHeader(), Header.class).getMsgType()==TransCode.LOGIN_ACTION) {
                     conn.setSync(false);
                     break;
                 }
@@ -64,7 +64,7 @@ public class Client {
                         Message message = new Message();
                         Map<String, Object> headerMap = new HashMap<String, Object>();
                         headerMap.put("version", "1.0");
-                        headerMap.put("msgType", MsgType.MESSAGE_IM);//发送消息
+                        headerMap.put("msgType", TransCode.MESSAGE_TRANS_ACTION);//发送消息
                         headerMap.put("receiver", new String[] {receiver});
                         headerMap.put("sender", username);
                         headerMap.put("encoding", encoding);
@@ -95,31 +95,31 @@ public class Client {
         sc.close();
     }
 
-    public static Message login(NettyConnection conn, String username) throws Throwable {
+    public static Message login(EchoConnection conn, String username) throws Throwable {
         System.out.println("正在登录...........................");
         Message message = new Message();
         Map<String, Object> headerMap = new HashMap<String, Object>();
         headerMap.put("version", "1.0");
-        headerMap.put("msgType", MsgType.USER_LOGIN);// 登录
+        headerMap.put("msgType", TransCode.LOGIN_ACTION);// 登录
         headerMap.put("sender", username);
         message.setHeader(JSON.toJSONString(headerMap));
         return conn.sendMessage(message);// 开始登录
     }
 
-    public static NettyConnection connectServer() throws Throwable {
-        NettyConnection conn = new NettyConnection("localhost", 8000).connect().setListener(new MessageListener() {
+    public static EchoConnection connectServer() throws Throwable {
+        EchoConnection conn = new EchoConnection("localhost", 8000).connect().setListener(new MessageListener() {
             @Override
             public void callback(ChannelHandlerContext ctx, Message message) {
                 Header header = JSON.parseObject(message.getHeader(), Header.class);
                 if (header.getSender() != null) {
                     try {
-                        if (header.getMsgType() == MsgType.MESSAGE_IM) {
+                        if (header.getMsgType() == TransCode.MESSAGE_TRANS_ACTION) {
                             LOG_RECEIVE.info(new String(message.getBody()));
                             System.out.println();
                             System.out.println("         " + header.getSender() + ":" +new String(message.getBody()));
                             System.out.print(header.getReceiver()[0] + ":");
                         }
-                        if (header.getMsgType() == MsgType.USER_EXIST) {// 用户已被注册，请重启程序，并使用新的用户名登录
+                        if (header.getMsgType() == TransCode.USER_EXIST) {// 用户已被注册，请重启程序，并使用新的用户名登录
                             System.out.print("用户已被注册，请重启程序，并使用新的用户名登录");
                         }
                     } catch (Exception e) {

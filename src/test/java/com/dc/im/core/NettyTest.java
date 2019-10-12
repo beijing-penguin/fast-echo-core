@@ -9,7 +9,7 @@ import io.netty.channel.ChannelHandlerContext;
 
 public class NettyTest {
     public static void main(String[] args) throws Throwable {
-        NettyConnection conn = new NettyConnection("localhost",8000).connect().setListener(new MessageListener() {
+        EchoConnection conn = new EchoConnection("localhost",8000).connect().setListener(new MessageListener() {
             @Override
             public void callback(ChannelHandlerContext ctx, Message message) {
                 System.err.println(JSON.toJSONString(message));
@@ -25,7 +25,7 @@ public class NettyTest {
         conn.sendMessage(message);
         //send(conn);
     }
-   static void send(NettyConnection conn) throws Throwable {
+   static void send(EchoConnection conn) throws Throwable {
         long begin = System.currentTimeMillis();
         for (int i = 0; i < 100000; i++) {
             Message message = new Message();
