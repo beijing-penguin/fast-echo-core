@@ -30,7 +30,7 @@ public class Client {
     public static EchoConnection conn;
     public static long start;
     public static void main(String[] args) throws Throwable {
-        System.err.println(Math.max(1, SystemPropertyUtil.getInt(
+        System.out.println("当前机器线程核心线程数="+Math.max(1, SystemPropertyUtil.getInt(
                 "io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 2)));
         String encoding = System.getProperty("file.encoding");
         Scanner sc = new Scanner(System.in,encoding);
