@@ -72,7 +72,7 @@ public class EchoRemotingServer {
 				//readerIdleTime服务端长时间没有读到数据，则为读空闲，触发读空闲监听，并自动关闭链路连接，周期性按readerIdleTime的超时间触发空闲监听方法
 				//writerIdleTime服务端长时间没有发送写请求，则为空闲，触发写空闲监听,空闲期间，周期性按writerIdleTime的超时间触发空闲监听方法
 				//allIdleTime 服务端在allIdleTime时间内未接收到客户端消息，或者，也未去向客户端发送消息，则触发周期性操作
-				pipeline.addLast("ping", new IdleStateHandler(10, 25, 45, TimeUnit.SECONDS));
+				pipeline.addLast("ping", new IdleStateHandler(0, 0, 40, TimeUnit.SECONDS));
 
 				// 以("\n")为结尾分割的 解码器
 				//                pipeline.addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
