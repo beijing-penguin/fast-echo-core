@@ -17,12 +17,11 @@ public class LoginController {
 		Header header = msg.getHeaderObj();
 		//1.认证登录参数
         //2.登录成功
-        synchronized (user_channel_map) {
+        synchronized (header.getSender()) {
             if(user_channel_map.containsKey(header.getSender())) {//注册id已存在
                 header.setStatusCode(EchoCode.USER_EXIST);
                 msg.setHeader(JSON.toJSONString(header));
                 ctx.channel().writeAndFlush(msg);
-                ctx.close();
             }else {
                 user_channel_map.put(header.getSender(), ctx);
                 header.setStatusCode(EchoCode.SUCCESS);

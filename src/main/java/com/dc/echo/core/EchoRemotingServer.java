@@ -16,7 +16,6 @@ import com.dc.echo.utils.EchoCoreUtils;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -28,8 +27,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;       
 
 public class EchoRemotingServer {
 
@@ -105,44 +102,12 @@ public class EchoRemotingServer {
 									for (int i = 0; i < receiverArr.length; i++) {
 										ChannelHandlerContext receiver_channel = LoginController.user_channel_map.get(receiverArr[i]);
 										if(receiver_channel!=null && receiver_channel.channel().isOpen() && receiver_channel.channel().isActive()) {
-											ChannelFuture future = receiver_channel.channel().writeAndFlush(msg);
-											future.addListener(new GenericFutureListener<Future<? super Void>>() {
-												@Override
-												public void operationComplete(Future<? super Void> future) throws Exception {
-													Object o = future.get();
-													if(future.isDone()) {
-														System.err.println("future.isDone()");
-													}
-													if(future.isSuccess()) {
-														System.err.println("future.isSuccess()");
-													}
-													if(future.isCancelled()) {
-														System.err.println("future.isCancelled()");
-													}
-													System.err.println(JSON.toJSONString(o));
-												}
-											});
+											receiver_channel.channel().writeAndFlush(msg);
 										}
 									}
 									break;
 								case EchoCode.HEARTBEAT_ACTION:
-									ChannelFuture future = ctx.channel().writeAndFlush(EchoCoreUtils.getMessByCode(EchoCode.SUCCESS));
-									future.addListener(new GenericFutureListener<Future<? super Void>>() {
-										@Override
-										public void operationComplete(Future<? super Void> future) throws Exception {
-											Object o = future.get();
-											if(future.isDone()) {
-												System.err.println("future.isDone()");
-											}
-											if(future.isSuccess()) {
-												System.err.println("future.isSuccess()");
-											}
-											if(future.isCancelled()) {
-												System.err.println("future.isCancelled()");
-											}
-											System.err.println(JSON.toJSONString(o));
-										}
-									});
+									ctx.channel().writeAndFlush(EchoCoreUtils.getMessByCode(EchoCode.SUCCESS));
 								default:
 									break;
 								}
@@ -166,9 +131,9 @@ public class EchoRemotingServer {
 							if(entry.getValue()==ctx) {
 								LOG.info("["+entry.getKey()+"]-用户已退出");
 								LoginController.user_channel_map.remove(entry.getKey());
+								ctx.close();
 							}
 						}
-						ctx.close();
 					}
 
 					@Override
@@ -200,6 +165,7 @@ public class EchoRemotingServer {
 					@Override
 					public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 						LOG.info("",cause);
+						ctx.close();
 					}
 				});
 			}

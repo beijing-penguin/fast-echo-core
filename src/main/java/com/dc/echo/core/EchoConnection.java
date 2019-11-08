@@ -23,6 +23,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 
 public class EchoConnection{
     private static Logger LOG = LoggerFactory.getLogger(LoggerName.CONSOLE);
@@ -41,11 +43,11 @@ public class EchoConnection{
 
     // 是否同步获取响应结果
     private boolean sync = false;
-    
+
     private int keepaliveTimeout = 5;//秒
-    
+
     public Thread keepaliveThread;
-    
+
     public EchoConnection(NettyConfig config){
         bootstrap = config.getBootstrap();
         group = config.getBoss();
@@ -56,27 +58,29 @@ public class EchoConnection{
         this.host = host;
         this.port = port;
     }
+    public void startHeartbeat() {
+        //开启心跳程序
+        keepaliveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(keepaliveThread!=null) {
+                    try {
+                        Thread.sleep(keepaliveTimeout*1000);
+                        sendMessage(EchoCoreUtils.getKeepaliveMess());
+                    } catch (Throwable e) {
+                        LOG.error("",e);
+                        return;
+                    }
+                }
+            }
+        });
+        keepaliveThread.start();
+    }
     public EchoConnection connect() throws Throwable{
         try {
             if(group==null) {
                 group = new NioEventLoopGroup(1);
             }
-            //开启心跳程序
-            keepaliveThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while(keepaliveThread!=null) {
-                        try {
-                            Thread.sleep(keepaliveTimeout*1000);
-                            sendMessage(EchoCoreUtils.getKeepaliveMess());
-                        } catch (Throwable e) {
-                            LOG.error("",e);
-                            return;
-                        }
-                    }
-                }
-            });
-            keepaliveThread.start();
             if(bootstrap==null) {
                 bootstrap = new Bootstrap()
                         .group(group)
@@ -112,7 +116,6 @@ public class EchoConnection{
                                     @Override
                                     public void channelActive(ChannelHandlerContext ctx) throws Exception {
                                         System.out.println("Client active ");
-                                        super.channelActive(ctx);
                                     }
 
                                     @Override
@@ -124,7 +127,6 @@ public class EchoConnection{
                                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
                                         System.out.println("链接异常中断");
                                         LOG.error("",cause);
-                                        close();
                                     }
                                     @Override
                                     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -134,13 +136,23 @@ public class EchoConnection{
                                     @Override
                                     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
                                         //System.err.println("channelUnregistered");
-                                        close();
+                                        //close();
                                     }
 
                                     @Override
                                     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-                                        //System.err.println("userEventTriggered");
-                                        ctx.close();
+                                        if (evt instanceof IdleStateEvent) {
+                                            IdleStateEvent event = (IdleStateEvent) evt;
+                                            if (event.state().equals(IdleState.READER_IDLE)) {
+                                                System.out.println("READER_IDLE");
+                                            } else if (event.state().equals(IdleState.WRITER_IDLE)) {
+                                                System.out.println("WRITER_IDLE");
+                                            } else if (event.state().equals(IdleState.ALL_IDLE)) {
+                                                System.out.println("ALL_IDLE");
+                                                // 发送心跳
+                                                // ctx.channel().writeAndFlush("ping\n");
+                                            }
+                                        }
                                     }
                                 });
                             }
@@ -188,12 +200,13 @@ public class EchoConnection{
                 LOG.error("close nettyconnection fail",e);
             }
         }
-        
+
         if(group!=null) {
             group.shutdownGracefully();
             group = null;
         }
         if(keepaliveThread!=null) {
+            keepaliveThread.interrupt();
             keepaliveThread = null;
         }
         bootstrap= null;

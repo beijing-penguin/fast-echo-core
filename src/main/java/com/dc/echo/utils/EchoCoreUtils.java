@@ -23,7 +23,7 @@ public class EchoCoreUtils {
     public static Message getErrorMess() {
         Message msg = new Message();
         Header header = new Header();
-        header.setMsgType(EchoCode.ERROR);//心跳
+        header.setMsgType(EchoCode.ERROR);
         msg.setHeader(JSON.toJSONString(header));
         return msg;
     }
