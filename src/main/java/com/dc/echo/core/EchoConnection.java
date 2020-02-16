@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.dc.echo.config.LoggerName;
 import com.dc.echo.config.NettyConfig;
-import com.dc.echo.pojo.Message;
 import com.dc.echo.utils.EchoCoreUtils;
 
 import io.netty.bootstrap.Bootstrap;
@@ -31,7 +30,7 @@ public class EchoConnection{
 
     public static CountDownLatch  resultWait;
 
-    private static Message message = null;
+    private static byte[] dataByteArr = null;
 
     private int readTimeOut = 10;//秒
     private EventLoopGroup group;
@@ -66,7 +65,7 @@ public class EchoConnection{
                 while(keepaliveThread!=null) {
                     try {
                         Thread.sleep(keepaliveTimeout*1000);
-                        sendMessage(EchoCoreUtils.getKeepaliveMess());
+                        sendByteMessage(EchoCoreUtils.getKeepaliveMess());
                     } catch (Throwable e) {
                         LOG.error("",e);
                         return;
@@ -99,16 +98,16 @@ public class EchoConnection{
                                 //                pipeline.addLast("encoder", new StringEncoder());
                                 pipeline.addLast("decoder", new MessageDecoder());
                                 pipeline.addLast("encoder", new MessageEncoder());
-                                pipeline.addLast("handler", new SimpleChannelInboundHandler<Message>() {
+                                pipeline.addLast("handler", new SimpleChannelInboundHandler<byte[]>() {
                                     @Override
-                                    protected void channelRead0(ChannelHandlerContext ctx, Message message) throws Exception {
-                                        //System.err.println("客户端收到"+message.getHeaders());
+                                    protected void channelRead0(ChannelHandlerContext ctx, byte[] dataByteArr) throws Exception {
+                                        System.err.println("客户端收到"+new String(dataByteArr));
                                         if(sync) {
-                                            EchoConnection.message = message;
+                                            EchoConnection.dataByteArr = dataByteArr;
                                             resultWait.countDown();
                                         }else {
                                             if(listener!=null) {
-                                                listener.callback(ctx,message);
+                                                listener.callback(ctx,dataByteArr);
                                             }
                                         }
                                     }
@@ -165,9 +164,9 @@ public class EchoConnection{
         }
         return this;
     }
-    public Message sendMessage(Message message,MessageListener listener) throws Throwable{
+    public byte[] sendByteMessage(byte[] dataByteArr,MessageListener listener) throws Throwable{
         if(sync) {
-            EchoConnection.message=null;
+            EchoConnection.dataByteArr=null;
             EchoConnection.resultWait = new CountDownLatch(1);
         }
         if(listener!=null ) {
@@ -176,20 +175,20 @@ public class EchoConnection{
         if(channel==null || !channel.isOpen() || !channel.isActive()) {
             throw new Exception("channel break,Unable to connect to server");
         }
-        channel.writeAndFlush(message);
+        channel.writeAndFlush(dataByteArr);
         if(sync) {
             EchoConnection.resultWait.await(readTimeOut,TimeUnit.SECONDS);
             if(EchoConnection.resultWait.getCount()!=0) {
-                EchoConnection.message = null;
+                EchoConnection.dataByteArr = null;
                 throw new Exception("send fail");
             }
-            return EchoConnection.message;
+            return EchoConnection.dataByteArr;
         }else {
             return null;
         }
     }
-    public Message sendMessage(Message message) throws Throwable{
-        return sendMessage(message, null);
+    public byte[] sendByteMessage(byte[] dataByteArr) throws Throwable{
+        return sendByteMessage(dataByteArr, null);
     }
     public void close() {
         if(channel!=null){
@@ -233,11 +232,12 @@ public class EchoConnection{
     public void setReadTimeOut(int readTimeOut) {
         this.readTimeOut = readTimeOut;
     }
-    public static Message getMessage() {
-        return message;
+    
+    public static byte[] getDataByteArr() {
+        return dataByteArr;
     }
-    public static void setMessage(Message message) {
-        EchoConnection.message = message;
+    public static void setDataByteArr(byte[] dataByteArr) {
+        EchoConnection.dataByteArr = dataByteArr;
     }
     public boolean isSync() {
         return sync;

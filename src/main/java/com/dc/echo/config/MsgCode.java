@@ -1,6 +1,6 @@
 package com.dc.echo.config;
 
-public class EchoCode {
+public class MsgCode {
 	public static final int SUCCESS = 200;
 	public static final int LOGIN_SUCCESS = 1;
 	

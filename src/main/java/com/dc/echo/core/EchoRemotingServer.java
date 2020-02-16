@@ -8,9 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.dc.echo.config.EchoCode;
+import com.dc.echo.config.MsgCode;
 import com.dc.echo.config.LoggerName;
-import com.dc.echo.pojo.Header;
 import com.dc.echo.pojo.Message;
 import com.dc.echo.utils.EchoCoreUtils;
 
@@ -85,29 +84,28 @@ public class EchoRemotingServer {
 				//                pipeline.addLast("encoder", new StringEncoder());
 				pipeline.addLast("decoder", new MessageDecoder());
 				pipeline.addLast("encoder", new MessageEncoder());
-				pipeline.addLast("handler", new SimpleChannelInboundHandler<Message>() {
+				pipeline.addLast("handler", new SimpleChannelInboundHandler<byte[]>() {
 					@Override
-					protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-						try {
-							Header header = JSON.parseObject(msg.getHeader(),Header.class);
-							msg.setHeaderObj(header);
+					protected void channelRead0(ChannelHandlerContext ctx, byte[] dataByteArr) throws Exception {
+					    try {
+						    Message msg = EchoCoreUtils.byteToMessage(dataByteArr);
 							if(InterceptorController.interceptor(ctx, msg)) {
 								LOG_RECEIVE.info(JSON.toJSONString(msg));
-								switch (header.getMsgType()) {
-								case EchoCode.LOGIN_ACTION:
+								switch (msg.getMsgCode()) {
+								case MsgCode.LOGIN_ACTION:
 									LoginController.login(ctx, msg);
 									break;
-								case EchoCode.MESSAGE_TRANS_ACTION:
-									String[]  receiverArr = header.getReceiver();
+								case MsgCode.MESSAGE_TRANS_ACTION:
+									String[]  receiverArr = msg.getReceiver();
 									for (int i = 0; i < receiverArr.length; i++) {
 										ChannelHandlerContext receiver_channel = LoginController.user_channel_map.get(receiverArr[i]);
 										if(receiver_channel!=null && receiver_channel.channel().isOpen() && receiver_channel.channel().isActive()) {
-											receiver_channel.channel().writeAndFlush(msg);
+											receiver_channel.channel().writeAndFlush(dataByteArr);
 										}
 									}
 									break;
-								case EchoCode.HEARTBEAT_ACTION:
-									ctx.channel().writeAndFlush(EchoCoreUtils.getMessByCode(EchoCode.SUCCESS));
+								case MsgCode.HEARTBEAT_ACTION:
+									ctx.channel().writeAndFlush(EchoCoreUtils.getMessByCode(MsgCode.SUCCESS));
 								default:
 									break;
 								}

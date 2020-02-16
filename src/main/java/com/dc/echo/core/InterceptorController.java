@@ -1,13 +1,13 @@
 package com.dc.echo.core;
 
-import com.dc.echo.config.EchoCode;
+import com.dc.echo.config.MsgCode;
 import com.dc.echo.pojo.Message;
 
 import io.netty.channel.ChannelHandlerContext;
 
 public class InterceptorController {
 	public static boolean interceptor(ChannelHandlerContext ctx, Message msg) {
-		if(msg.getHeaderObj().getMsgType()==EchoCode.HEARTBEAT_ACTION) {
+		if(msg.getMsgCode()==MsgCode.HEARTBEAT_ACTION) {
 			return true;
 		}
 //		if(AppKeyConfig.appKeySet.contains(msg.getHeaderObj().getAppKey())) {

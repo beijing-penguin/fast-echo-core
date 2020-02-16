@@ -9,11 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.dc.echo.config.LoggerName;
-import com.dc.echo.config.EchoCode;
+import com.dc.echo.config.MsgCode;
 import com.dc.echo.core.EchoConnection;
 import com.dc.echo.core.MessageListener;
-import com.dc.echo.pojo.Header;
 import com.dc.echo.pojo.Message;
+import com.dc.echo.utils.EchoCoreUtils;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -42,8 +42,8 @@ public class Client {
             conn = connectServer();
             try {
                 conn.setSync(true);
-                Message message = login(conn, username);
-                if(JSON.parseObject(message.getHeader(), Header.class).getMsgType()==EchoCode.LOGIN_ACTION) {
+                Message message = EchoCoreUtils.byteToMessage(login(conn, username));
+                if(message.getMsgCode()==MsgCode.LOGIN_ACTION) {
                     conn.setSync(false);
                     break;
                 }
@@ -57,22 +57,19 @@ public class Client {
         String receiver = sc.nextLine();
         System.out.print(username+":");
         while(sc.hasNextLine()) {
-            String context = sc.nextLine();
-            if(context!=null && context.length()>0) {
+            String content = sc.nextLine();
+            if(content!=null && content.length()>0) {
                 try {
-                    for (int i = 0; i < Integer.parseInt(context); i++) {
+                    for (int i = 0; i < Integer.parseInt(content); i++) {
                         Message message = new Message();
-                        Map<String, Object> headerMap = new HashMap<String, Object>();
-                        headerMap.put("version", "1.0");
-                        headerMap.put("msgType", EchoCode.MESSAGE_TRANS_ACTION);//发送消息
-                        headerMap.put("receiver", new String[] {receiver});
-                        headerMap.put("sender", username);
-                        headerMap.put("encoding", encoding);
-                        headerMap.put("sendTime", System.currentTimeMillis());
-                        message.setHeader(JSON.toJSONString(headerMap));
-                    
-                        message.setBody(context.getBytes());
-                        conn.sendMessage(message);//发送消息
+                        message.setVersion("1.0");
+                        message.setMsgCode(MsgCode.MESSAGE_TRANS_ACTION);
+                        message.setReceiver(new String[] {receiver});
+                        message.setSender(username);
+                        message.setEncoding(encoding);
+                        message.setSendTime(System.currentTimeMillis());
+                        message.setContent(content);
+                        conn.sendByteMessage(EchoCoreUtils.messageToByteArr(message));//发送消息
                     }
                     
                 }catch (Exception e) {
@@ -95,31 +92,29 @@ public class Client {
         sc.close();
     }
 
-    public static Message login(EchoConnection conn, String username) throws Throwable {
+    public static byte[] login(EchoConnection conn, String username) throws Throwable {
         System.out.println("正在登录...........................");
         Message message = new Message();
-        Map<String, Object> headerMap = new HashMap<String, Object>();
-        headerMap.put("version", "1.0");
-        headerMap.put("msgType", EchoCode.LOGIN_ACTION);// 登录
-        headerMap.put("sender", username);
-        message.setHeader(JSON.toJSONString(headerMap));
-        return conn.sendMessage(message);// 开始登录
+        message.setVersion("1.0");
+        message.setMsgCode(MsgCode.LOGIN_ACTION);
+        message.setSender(username);
+        return conn.sendByteMessage(EchoCoreUtils.messageToByteArr(message));// 开始登录
     }
 
     public static EchoConnection connectServer() throws Throwable {
-        EchoConnection conn = new EchoConnection("localhost", 8000).connect().setListener(new MessageListener() {
+        EchoConnection conn = new EchoConnection("localhost", 6666).connect().setListener(new MessageListener() {
             @Override
-            public void callback(ChannelHandlerContext ctx, Message message) {
-                Header header = JSON.parseObject(message.getHeader(), Header.class);
-                if (header.getSender() != null) {
+            public void callback(ChannelHandlerContext ctx, byte[] dataByteArr) {
+                Message msg = EchoCoreUtils.byteToMessage(dataByteArr);
+                if (msg.getSender() != null) {
                     try {
-                        if (header.getMsgType() == EchoCode.MESSAGE_TRANS_ACTION) {
-                            LOG_RECEIVE.info(new String(message.getBody()));
+                        if (msg.getMsgCode() == MsgCode.MESSAGE_TRANS_ACTION) {
+                            LOG_RECEIVE.info(new String(msg.getContent()));
                             System.out.println();
-                            System.out.println("         " + header.getSender() + ":" +new String(message.getBody()));
-                            System.out.print(header.getReceiver()[0] + ":");
+                            System.out.println("         " + msg.getSender() + ":" +new String(msg.getContent()));
+                            System.out.print(msg.getReceiver()[0] + ":");
                         }
-                        if (header.getMsgType() == EchoCode.USER_EXIST) {// 用户已被注册，请重启程序，并使用新的用户名登录
+                        if (msg.getMsgCode() == MsgCode.USER_EXIST) {// 用户已被注册，请重启程序，并使用新的用户名登录
                             System.out.print("用户已被注册，请重启程序，并使用新的用户名登录");
                         }
                     } catch (Exception e) {
