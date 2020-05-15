@@ -2,14 +2,12 @@ package com.dc.echo.core;
 
 import java.net.InetSocketAddress;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
-import com.dc.echo.config.MsgCode;
 import com.dc.echo.config.LoggerName;
+import com.dc.echo.config.MsgCode;
 import com.dc.echo.pojo.Message;
 import com.dc.echo.utils.EchoCoreUtils;
 
@@ -25,7 +23,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.ReferenceCountUtil;
 
 public class EchoRemotingServer {
 
@@ -55,15 +53,14 @@ public class EchoRemotingServer {
 		}
 		serverBootstrap.group(boss, work)
 		.channel(NioServerSocketChannel.class)
-		.option(ChannelOption.SO_BACKLOG, 1024)
-		.option(ChannelOption.SO_REUSEADDR, true)
+		.option(ChannelOption.SO_BACKLOG, 4096)
 		//.option(ChannelOption.SO_KEEPALIVE, true)
 		//启用ByteBuf重用
-		.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-        .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+		//.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+		//.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 		.childOption(ChannelOption.TCP_NODELAY, true)
-		.childOption(ChannelOption.SO_SNDBUF, 65535)
-		.childOption(ChannelOption.SO_RCVBUF, 65535)
+		.childOption(ChannelOption.SO_SNDBUF, 65535*10)
+		.childOption(ChannelOption.SO_RCVBUF, 65535*10)
 		.localAddress(new InetSocketAddress(port))
 		.childHandler(new ChannelInitializer<SocketChannel>() {
 			@Override
@@ -75,7 +72,7 @@ public class EchoRemotingServer {
 				//readerIdleTime服务端长时间没有读到数据，则为读空闲，触发读空闲监听，并自动关闭链路连接，周期性按readerIdleTime的超时间触发空闲监听方法
 				//writerIdleTime服务端长时间没有发送写请求，则为空闲，触发写空闲监听,空闲期间，周期性按writerIdleTime的超时间触发空闲监听方法
 				//allIdleTime 服务端在allIdleTime时间内未接收到客户端消息，或者，也未去向客户端发送消息，则触发周期性操作
-				pipeline.addLast("ping", new IdleStateHandler(0, 0, 40, TimeUnit.SECONDS));
+				//pipeline.addLast("ping", new IdleStateHandler(0, 0, 40, TimeUnit.SECONDS));
 
 				// 以("\n")为结尾分割的 解码器
 				//                pipeline.addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
@@ -89,14 +86,15 @@ public class EchoRemotingServer {
 					protected void channelRead0(ChannelHandlerContext ctx, byte[] dataByteArr) throws Exception {
 					    try {
 						    Message msg = EchoCoreUtils.byteToMessage(dataByteArr);
+						    String[]  receiverArr = msg.getReceiver();
 							if(InterceptorController.interceptor(ctx, msg)) {
-								LOG_RECEIVE.info(JSON.toJSONString(msg));
+								//LOG_RECEIVE.info(JSON.toJSONString(msg));
 								switch (msg.getMsgCode()) {
 								case MsgCode.LOGIN_ACTION:
 									LoginController.login(ctx, msg);
 									break;
 								case MsgCode.MESSAGE_TRANS_ACTION:
-									String[]  receiverArr = msg.getReceiver();
+									
 									for (int i = 0; i < receiverArr.length; i++) {
 										ChannelHandlerContext receiver_channel = LoginController.user_channel_map.get(receiverArr[i]);
 										if(receiver_channel!=null && receiver_channel.channel().isOpen() && receiver_channel.channel().isActive()) {
@@ -104,6 +102,18 @@ public class EchoRemotingServer {
 										}
 									}
 									break;
+								case 4:
+								case 5:
+								case 6:
+								case 7:
+								case 8:
+								case 9:
+									for (int i = 0; i < receiverArr.length; i++) {
+										ChannelHandlerContext receiver_channel = LoginController.user_channel_map.get(receiverArr[i]);
+										if(receiver_channel!=null && receiver_channel.channel().isOpen() && receiver_channel.channel().isActive()) {
+											receiver_channel.channel().writeAndFlush(dataByteArr);
+										}
+									}
 								case MsgCode.HEARTBEAT_ACTION:
 									ctx.channel().writeAndFlush(EchoCoreUtils.getMessByCode(MsgCode.SUCCESS));
 								default:
