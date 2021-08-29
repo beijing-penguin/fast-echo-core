@@ -13,6 +13,7 @@ public class StartServer {
 		try {
 			server.start();
 			LOG.info("success,bind port is "+server.getPort());
+			
 		} catch (Throwable e) {
 			LOG.error("",e);
 		}
